@@ -1,8 +1,10 @@
-use crate::{instruction::EscrowInstruction, error::EscrowError};
+use thiserror::Error;
 use solana_program::program_error::ProgramError;
 
 #[derive(Error, Debug, Copy, Clone)]
-pub enum EscrowError {
+pub enum EscrowError {   
+    #[error("Not Rent Exempt")] 
+    NotRentExempt,
     /// Invalid instruction
     #[error("Invalid Instruction")]
     InvalidInstruction,
