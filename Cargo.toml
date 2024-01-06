@@ -9,6 +9,7 @@ edition = "2021"
 solana-program = "1.9.9"
 ahash = "=0.8.6"
 thiserror = "1.0.24"
+spl-token = {version = "3.2.0", features = ["no-entrypoint"]}
 
 [dev-dependencies]
 solana-program-test = "1.9.9"
