@@ -19,8 +19,8 @@ pub enum EscrowInstruction {
     /// 5. `[]` The token program
     InitEscrow {
         /// The amount party A expects to receive of token Y
-        amount: u64
-    }
+        amount: u64,
+    },
 
     /// Accepts a trade
     ///
