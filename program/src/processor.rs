@@ -1,12 +1,11 @@
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
-    entrypoint::ProgramResult,
     program_error::ProgramError,
     msg,
     pubkey::Pubkey,
     program_pack::{Pack, IsInitialized},
     sysvar::{rent::Rent, Sysvar},
-    program::{invoke, invoke_signed}
+    program::{invoke, invoke_signed}, clock::Clock
 };
 
 use crate::{instruction::EscrowInstruction, error::EscrowError, state::Escrow};
@@ -14,7 +13,7 @@ use spl_token::state::Account as TokenAccount;
 
 pub struct Processor;
 impl Processor {
-    pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult {
+    pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]) -> Result<Escrow, ProgramError> {
         let instruction = EscrowInstruction::unpack(instruction_data)?;
 
         match instruction {
@@ -33,16 +32,17 @@ impl Processor {
         }
     }
     
-    fn process_echo_oracle() -> ProgramResult {
+    fn process_echo_oracle() -> Result<Escrow, ProgramError> {
         msg!("Echo from oracle!");
-        Ok(())
+        let empty_escrow = Escrow::default(); 
+        Ok(empty_escrow)
     }
     
     fn process_init_escrow(
         accounts: &[AccountInfo],
         amount: u64,
         program_id: &Pubkey,
-    ) -> ProgramResult {
+    ) -> Result<Escrow, ProgramError>  {
         let account_info_iter = &mut accounts.iter();
         let initializer = next_account_info(account_info_iter)?;
 
@@ -74,6 +74,7 @@ impl Processor {
         escrow_info.temp_token_account_pubkey = *temp_token_account.key;
         escrow_info.initializer_token_to_receive_account_pubkey = *token_to_receive_account.key;
         escrow_info.expected_amount = amount;
+        escrow_info.expire_date = Clock::get().unwrap().unix_timestamp + 20000;
 
         Escrow::pack(escrow_info, &mut escrow_account.try_borrow_mut_data()?)?;
         let (pda, _bump_seed) = Pubkey::find_program_address(&[b"escrow"], program_id);
@@ -97,14 +98,14 @@ impl Processor {
                 token_program.clone(),
             ],
         )?;
-        Ok(())
+        Ok(escrow_info)
     }
    
     fn process_exchange(
         accounts: &[AccountInfo],
         amount_expected_by_taker: u64,
         program_id: &Pubkey,
-    ) -> ProgramResult {
+    ) -> Result<Escrow, ProgramError> {
         let account_info_iter = &mut accounts.iter();
         let taker = next_account_info(account_info_iter)?;
     
@@ -212,7 +213,6 @@ impl Processor {
         **escrow_account.lamports.borrow_mut() = 0;
         *escrow_account.try_borrow_mut_data()? = &mut [];
         
-
-        Ok(())
+        Ok(escrow_info)
     }
 }
