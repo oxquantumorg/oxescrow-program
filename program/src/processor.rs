@@ -25,8 +25,17 @@ impl Processor {
             EscrowInstruction::Exchange { amount } => {
                 msg!("Instruction: Exchange");
                 Self::process_exchange(accounts, amount, program_id)
+            },
+            EscrowInstruction::Oracle => {
+                msg!("Instruction: Oracle");
+                Self::process_echo_oracle()
             }
         }
+    }
+    
+    fn process_echo_oracle() -> ProgramResult {
+        msg!("Echo from oracle!");
+        Ok(())
     }
     
     fn process_init_escrow(

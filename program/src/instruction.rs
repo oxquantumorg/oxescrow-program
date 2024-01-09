@@ -39,7 +39,8 @@ pub enum EscrowInstruction {
     Exchange {
         /// the amount the taker expects to be paid in the other token, as a u64 because that's the max possible supply of a token
         amount: u64,
-    }
+    },
+    Oracle
 }
 
 
@@ -55,6 +56,7 @@ impl EscrowInstruction {
             1 => Self::Exchange {
                 amount: Self::unpack_amount(rest)?
             },
+            2 => Self::Oracle,
             _ => return Err(InvalidInstruction.into()),
         })
     }
