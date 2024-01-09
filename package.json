@@ -7,6 +7,7 @@
   "scripts": {
     "build": "cargo build-bpf --manifest-path=./program/Cargo.toml --bpf-out-dir=dist/program",
     "deploy": "node ./client/deployer.js",
+    "oracle": "node ./client/oracle.js",
     "start": ""
   },
   "author": "BigChiano",
