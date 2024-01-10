@@ -65,6 +65,7 @@ impl Processor {
         }
 
         let mut escrow_info = Escrow::unpack_unchecked(&escrow_account.try_borrow_data()?)?;
+        let mut escrow_info_copy = Escrow::unpack_unchecked(&escrow_account.try_borrow_data()?)?;
         if escrow_info.is_initialized() {
             return Err(ProgramError::AccountAlreadyInitialized);
         }
@@ -75,7 +76,14 @@ impl Processor {
         escrow_info.initializer_token_to_receive_account_pubkey = *token_to_receive_account.key;
         escrow_info.expected_amount = amount;
         escrow_info.expire_date = Clock::get().unwrap().unix_timestamp + 20000;
-
+        
+        escrow_info_copy.is_initialized = true;
+        escrow_info_copy.initializer_pubkey = *initializer.key;
+        escrow_info_copy.temp_token_account_pubkey = *temp_token_account.key;
+        escrow_info_copy.initializer_token_to_receive_account_pubkey = *token_to_receive_account.key;
+        escrow_info_copy.expected_amount = amount;
+        escrow_info_copy.expire_date = Clock::get().unwrap().unix_timestamp + 20000;
+        
         Escrow::pack(escrow_info, &mut escrow_account.try_borrow_mut_data()?)?;
         let (pda, _bump_seed) = Pubkey::find_program_address(&[b"escrow"], program_id);
 
@@ -98,7 +106,7 @@ impl Processor {
                 token_program.clone(),
             ],
         )?;
-        Ok(escrow_info)
+        Ok(escrow_info_copy)
     }
    
     fn process_exchange(

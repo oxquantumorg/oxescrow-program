@@ -11,5 +11,6 @@ fn process_instruction(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    Processor::process(program_id, accounts, instruction_data)
+    let _ = Processor::process(program_id, accounts, instruction_data);
+    Ok(())
 }
