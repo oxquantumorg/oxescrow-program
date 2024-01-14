@@ -9,6 +9,7 @@ use arrayref::{array_mut_ref, array_ref, array_refs, mut_array_refs};
 pub struct Escrow {
     pub is_initialized: bool,
     pub initializer_pubkey: Pubkey,
+    pub receiver_pubkey: Pubkey,
     pub temp_token_account_pubkey: Pubkey,
     pub escrow_amount: u64,
     pub expire_date: i64,
@@ -23,16 +24,17 @@ impl IsInitialized for Escrow {
 }
 
 impl Pack for Escrow {
-    const LEN: usize = 81;
+    const LEN: usize = 113;
     fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
         let src = array_ref![src, 0, Escrow::LEN];
         let (
             is_initialized,
             initializer_pubkey,
+            receiver_pubkey,
             temp_token_account_pubkey,
             escrow_amount,
             expire_date,
-        ) = array_refs![src, 1, 32, 32, 8, 8];
+        ) = array_refs![src, 1, 32, 32, 32, 8, 8];
         let is_initialized = match is_initialized {
             [0] => false,
             [1] => true,
@@ -42,6 +44,7 @@ impl Pack for Escrow {
         Ok(Escrow {
             is_initialized,
             initializer_pubkey: Pubkey::new_from_array(*initializer_pubkey),
+            receiver_pubkey: Pubkey::new_from_array(*receiver_pubkey),
             temp_token_account_pubkey: Pubkey::new_from_array(*temp_token_account_pubkey),
             escrow_amount: u64::from_le_bytes(*escrow_amount),
             expire_date: i64::from_le_bytes(*expire_date),
@@ -53,14 +56,16 @@ impl Pack for Escrow {
         let (
             is_initialized_dst,
             initializer_pubkey_dst,
+            receiver_pubkey_dst,
             temp_token_account_pubkey_dst,
             escrow_amount_dst,
             expire_date_dst,
-        ) = mut_array_refs![dst, 1, 32, 32, 8, 8];
+        ) = mut_array_refs![dst, 1, 32, 32, 32, 8, 8];
 
         let Escrow {
             is_initialized,
             initializer_pubkey,
+            receiver_pubkey,
             temp_token_account_pubkey,
             escrow_amount,
             expire_date,
@@ -68,6 +73,7 @@ impl Pack for Escrow {
 
         is_initialized_dst[0] = *is_initialized as u8;
         initializer_pubkey_dst.copy_from_slice(initializer_pubkey.as_ref());
+        receiver_pubkey_dst.copy_from_slice(receiver_pubkey.as_ref());
         temp_token_account_pubkey_dst.copy_from_slice(temp_token_account_pubkey.as_ref());
         *escrow_amount_dst = escrow_amount.to_le_bytes();
         *expire_date_dst = expire_date.to_le_bytes();
@@ -79,6 +85,7 @@ impl Default for Escrow {
         Escrow {
             is_initialized: Default::default(),
             initializer_pubkey: Default::default(),
+            receiver_pubkey: Default::default(),
             temp_token_account_pubkey: Default::default(),
             escrow_amount: Default::default(),
             expire_date: Default::default(),

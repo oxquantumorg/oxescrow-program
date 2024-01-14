@@ -9,7 +9,6 @@ use solana_program::{
 };
 
 use crate::{instruction::EscrowInstruction, error::EscrowError, state::Escrow};
-use spl_token::state::Account as TokenAccount;
 
 pub struct Processor;
 impl Processor {
@@ -123,8 +122,13 @@ impl Processor {
     
         let escrow_info = Escrow::unpack(&escrow_account.try_borrow_data()?)?;
         let current_timestamp = Clock::get().unwrap().unix_timestamp;
+
         if current_timestamp < escrow_info.expire_date {
             return Err(EscrowError::EscrowNotMaturedYet.into());
+        }
+    
+        if escrow_info.receiver_pubkey != *taker.key {
+            return Err(ProgramError::InvalidAccountData);
         }
 
         if escrow_info.temp_token_account_pubkey != *pdas_temp_token_account.key {
