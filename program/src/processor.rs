@@ -52,11 +52,6 @@ impl Processor {
 
         let temp_token_account = next_account_info(account_info_iter)?;
 
-        let token_to_receive_account = next_account_info(account_info_iter)?;
-        if *token_to_receive_account.owner != spl_token::id() {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-        
         let escrow_account = next_account_info(account_info_iter)?;
         let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
 
@@ -73,15 +68,13 @@ impl Processor {
         escrow_info.is_initialized = true;
         escrow_info.initializer_pubkey = *initializer.key;
         escrow_info.temp_token_account_pubkey = *temp_token_account.key;
-        escrow_info.initializer_token_to_receive_account_pubkey = *token_to_receive_account.key;
-        escrow_info.expected_amount = amount;
+        escrow_info.escrow_amount = amount;
         escrow_info.expire_date = Clock::get().unwrap().unix_timestamp + 20000;
-        
+
         escrow_info_copy.is_initialized = true;
         escrow_info_copy.initializer_pubkey = *initializer.key;
         escrow_info_copy.temp_token_account_pubkey = *temp_token_account.key;
-        escrow_info_copy.initializer_token_to_receive_account_pubkey = *token_to_receive_account.key;
-        escrow_info_copy.expected_amount = amount;
+        escrow_info_copy.escrow_amount = amount;
         escrow_info_copy.expire_date = Clock::get().unwrap().unix_timestamp + 20000;
         
         Escrow::pack(escrow_info, &mut escrow_account.try_borrow_mut_data()?)?;
@@ -121,8 +114,6 @@ impl Processor {
             return Err(ProgramError::MissingRequiredSignature);
         }
     
-        let takers_sending_token_account = next_account_info(account_info_iter)?;
-    
         let takers_token_to_receive_account = next_account_info(account_info_iter)?;
     
         let pdas_temp_token_account = next_account_info(account_info_iter)?;
@@ -135,11 +126,14 @@ impl Processor {
         }
     
         let initializers_main_account = next_account_info(account_info_iter)?;
-        let initializers_token_to_receive_account = next_account_info(account_info_iter)?;
         let escrow_account = next_account_info(account_info_iter)?;
     
         let escrow_info = Escrow::unpack(&escrow_account.try_borrow_data()?)?;
-    
+        let current_timestamp = Clock::get().unwrap().unix_timestamp;
+        if current_timestamp < escrow_info.expire_date {
+            return Err(EscrowError::EscrowNotMaturedYet.into());
+        }
+
         if escrow_info.temp_token_account_pubkey != *pdas_temp_token_account.key {
             return Err(ProgramError::InvalidAccountData);
         }
@@ -148,31 +142,7 @@ impl Processor {
             return Err(ProgramError::InvalidAccountData);
         }
     
-        if escrow_info.initializer_token_to_receive_account_pubkey != *initializers_token_to_receive_account.key {
-            return Err(ProgramError::InvalidAccountData);
-        }
-    
         let token_program = next_account_info(account_info_iter)?;
-    
-        let transfer_to_initializer_ix = spl_token::instruction::transfer(
-            token_program.key,
-            takers_sending_token_account.key,
-            initializers_token_to_receive_account.key,
-            taker.key,
-            &[&taker.key],
-            escrow_info.expected_amount,
-        )?;
-        msg!("Calling the token program to transfer tokens to the escrow's initializer...");
-        invoke(
-            &transfer_to_initializer_ix,
-            &[
-                takers_sending_token_account.clone(),
-                initializers_token_to_receive_account.clone(),
-                taker.clone(),
-                token_program.clone(),
-            ],
-        )?;
-
         let pda_account = next_account_info(account_info_iter)?;
 
         let transfer_to_taker_ix = spl_token::instruction::transfer(
@@ -181,7 +151,7 @@ impl Processor {
             takers_token_to_receive_account.key,
             &pda,
             &[&pda],
-            pdas_temp_token_account_info.amount,
+            escrow_info.escrow_amount,
         )?;
         msg!("Calling the token program to transfer tokens to the taker...");
         invoke_signed(

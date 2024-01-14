@@ -11,6 +11,8 @@ pub enum EscrowError {
     ExpectedAmountMismatch,
     #[error("Amount Overflow")]
     AmountOverflow,
+    #[error("Escrow time not reached yet")]
+    EscrowNotMaturedYet,
 }
 
 impl From<EscrowError> for ProgramError {
