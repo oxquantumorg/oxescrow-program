@@ -21,9 +21,9 @@ impl Processor {
                 msg!("Instruction: InitEscrow");
                 Self::process_init_escrow(accounts, amount, program_id)
             },
-            EscrowInstruction::Exchange { amount } => {
-                msg!("Instruction: Exchange");
-                Self::process_exchange(accounts, amount, program_id)
+            EscrowInstruction::ReleaseEscrow => {
+                msg!("Instruction: ReleaseEscrow");
+                Self::process_release_escrow(accounts, program_id)
             },
             EscrowInstruction::Oracle => {
                 msg!("Instruction: Oracle");
@@ -102,9 +102,8 @@ impl Processor {
         Ok(escrow_info_copy)
     }
    
-    fn process_exchange(
+    fn process_release_escrow(
         accounts: &[AccountInfo],
-        amount_expected_by_taker: u64,
         program_id: &Pubkey,
     ) -> Result<Escrow, ProgramError> {
         let account_info_iter = &mut accounts.iter();
@@ -117,13 +116,7 @@ impl Processor {
         let takers_token_to_receive_account = next_account_info(account_info_iter)?;
     
         let pdas_temp_token_account = next_account_info(account_info_iter)?;
-        let pdas_temp_token_account_info =
-            TokenAccount::unpack(&pdas_temp_token_account.try_borrow_data()?)?;
         let (pda, bump_seed) = Pubkey::find_program_address(&[b"escrow"], program_id);
-    
-        if amount_expected_by_taker != pdas_temp_token_account_info.amount {
-            return Err(EscrowError::ExpectedAmountMismatch.into());
-        }
     
         let initializers_main_account = next_account_info(account_info_iter)?;
         let escrow_account = next_account_info(account_info_iter)?;

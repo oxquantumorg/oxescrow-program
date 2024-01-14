@@ -33,10 +33,7 @@ pub enum EscrowInstruction {
     /// 4. `[writable]` The escrow account holding the escrow info
     /// 5. `[]` The token program
     /// 6. `[]` The PDA account
-    Exchange {
-        /// the amount the taker expects to be paid in the other token, as a u64 because that's the max possible supply of a token
-        amount: u64,
-    },
+    ReleaseEscrow,
     Oracle
 }
 
@@ -50,9 +47,7 @@ impl EscrowInstruction {
             0 => Self::InitEscrow {
                 amount: Self::unpack_amount(rest)?,
             },
-            1 => Self::Exchange {
-                amount: Self::unpack_amount(rest)?
-            },
+            1 => Self::ReleaseEscrow,
             2 => Self::Oracle,
             _ => return Err(InvalidInstruction.into()),
         })
