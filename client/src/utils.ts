@@ -19,6 +19,9 @@ export const getPublicKey = (name: string) =>
     JSON.parse(fs.readFileSync(`./keys/${name}_pub.json`) as unknown as string)
   );
 
+export const getPrivateKeyRaw = (name: string) =>
+  JSON.parse(fs.readFileSync(`./keys/${name}.json`) as unknown as string);
+
 export const getPrivateKey = (name: string) =>
   Uint8Array.from(
     JSON.parse(fs.readFileSync(`./keys/${name}.json`) as unknown as string)

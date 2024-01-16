@@ -7,8 +7,8 @@
   "scripts": {
     "compile": "tsc -p ./tsconfig.json",
     "build": "cargo build-bpf --manifest-path=../program/Cargo.toml --bpf-out-dir=dist/program",
-    "deploy": "node ./client/deployer.js",
-    "oracle": "node ./client/oracle.js",
+    "deploy": "npm run compile && node ./build/deployer.js",
+    "oracle": "npm run compile && node ./build/oracle.js",
     "setup": "npm run compile && node build/setup.js",
     "alice": "npm run compile && node build/alice.js"
   },

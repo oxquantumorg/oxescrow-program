@@ -1,8 +1,8 @@
 const {
-    Transaction,
-    TransactionInstruction,
-    sendAndConfirmTransaction,
-  } = require('@solana/web3.js');
+  Transaction,
+  TransactionInstruction,
+  sendAndConfirmTransaction,
+} = require('@solana/web3.js');
 const { establishConnection, loadPayer, loadProgram } = require('./network');
 const fs = require('fs');
 const BN = require("bn.js");
@@ -18,20 +18,20 @@ async function runOracle() {
     setInterval(async () => {
       try {
         const instruction = new TransactionInstruction({
-            programId: program.address,
-            data: Buffer.from(
-                Uint8Array.of(2, ...new BN(2).toArray("le", 8))
-              ),
-            keys: [],
-          });
+          programId: program.address,
+          data: Buffer.from(
+            Uint8Array.of(2, ...new BN(2).toArray("le", 8))
+          ),
+          keys: [],
+        });
 
-          const res = await sendAndConfirmTransaction(
-            connection,
-            new Transaction().add(instruction),
-            [payer],
-          );
+        const res = await sendAndConfirmTransaction(
+          connection,
+          new Transaction().add(instruction),
+          [payer],
+        );
 
-          console.log(res);
+        console.log(res);
       } catch (error) {
         console.error('Error in Oracle:', error);
       }

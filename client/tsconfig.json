@@ -5,6 +5,7 @@
       "lib": ["ESNext"],
       "strict": true,
       "skipLibCheck": true,
-      "allowJs": true
+      "allowJs": true,
+      "types": [ "node" ],
   }
 }

@@ -1,9 +1,14 @@
-import { createInitializeAccountInstruction, createTransferInstruction } from "@solana/spl-token";
+import {
+  createInitializeAccountInstruction,
+  createTransferInstruction,
+  AccountLayout,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import { getProgramId } from "./utils";
+import { sendAndConfirmTransaction } from "@solana/web3.js";
 
-const { AccountLayout, Token, TOKEN_PROGRAM_ID } = require("@solana/spl-token");
 const {
-  Keypair,
+  Account,
   PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -11,9 +16,7 @@ const {
   TransactionInstruction,
 } = require("@solana/web3.js");
 const BN = require("bn.js");
-const fs = require("fs");
 const {
-  EscrowLayout,
   getKeypair,
   ESCROW_ACCOUNT_DATA_LAYOUT,
   getPublicKey,
@@ -32,8 +35,9 @@ const alice = async () => {
   const aliceUsdcTokenAccountPubkey = getPublicKey("alice_usdc");
   const usdcTokenMintPubkey = getPublicKey("mint_usdc");
   const aliceKeypair = getKeypair("alice");
-  
-  const tempUsdcTokenAccountKeypair = new Keypair();
+  const initializerAccount = aliceKeypair;
+
+  const tempUsdcTokenAccountKeypair = new Account();
 
   const createTempTokenAccountIUsdc = SystemProgram.createAccount({
     programId: TOKEN_PROGRAM_ID,
@@ -41,39 +45,40 @@ const alice = async () => {
     lamports: await connection.getMinimumBalanceForRentExemption(
       AccountLayout.span
     ),
-    fromPubkey: aliceKeypair.publicKey,
+    fromPubkey: initializerAccount.publicKey,
     newAccountPubkey: tempUsdcTokenAccountKeypair.publicKey,
   });
   const initTempAccountIUsdc = createInitializeAccountInstruction(
-    TOKEN_PROGRAM_ID,
-    usdcTokenMintPubkey,
     tempUsdcTokenAccountKeypair.publicKey,
-    aliceKeypair.publicKey
+    usdcTokenMintPubkey,
+    initializerAccount.publicKey
   );
   const transferUsdcTokensToTempAccIUsdc = createTransferInstruction(
     aliceUsdcTokenAccountPubkey,
     tempUsdcTokenAccountKeypair.publicKey,
-    aliceUsdcTokenAccountPubkey,
-    terms.bobExpectedAmount,
-    undefined,
-    TOKEN_PROGRAM_ID
+    initializerAccount.publicKey,
+    terms.bobExpectedAmount
   );
 
-  const escrowKeypair = new Keypair();
+  const escrowKeypair = new Account();
   const createEscrowAccountIUsdc = SystemProgram.createAccount({
     space: ESCROW_ACCOUNT_DATA_LAYOUT.span,
     lamports: await connection.getMinimumBalanceForRentExemption(
       ESCROW_ACCOUNT_DATA_LAYOUT.span
     ),
-    fromPubkey: aliceKeypair.publicKey,
+    fromPubkey: initializerAccount.publicKey,
     newAccountPubkey: escrowKeypair.publicKey,
     programId: escrowProgramId,
   });
-  
+
   const initEscrowIUsdc = new TransactionInstruction({
     programId: escrowProgramId,
     keys: [
-      { pubkey: aliceKeypair.publicKey, isSigner: true, isWritable: false },
+      {
+        pubkey: initializerAccount.publicKey,
+        isSigner: true,
+        isWritable: false,
+      },
       {
         pubkey: tempUsdcTokenAccountKeypair.publicKey,
         isSigner: false,
@@ -96,16 +101,12 @@ const alice = async () => {
     initEscrowIUsdc
   );
 
-  const blockhash = (await connection.getLatestBlockhash('finalized')).blockhash;
-  tx.recentBlockhash = blockhash;
-  await tx.sign(aliceKeypair);
-
-  console.log("Sending Alice's transaction...");
-  await connection.sendTransaction(
-    tx,
-    [aliceKeypair, tempUsdcTokenAccountKeypair, escrowKeypair],
-    { skipPreflight: false, preflightCommitment: "confirmed" }
-  );
+  const res = await sendAndConfirmTransaction(connection, tx, [
+    initializerAccount,
+    tempUsdcTokenAccountKeypair,
+    escrowKeypair,
+  ]);
+  console.log("Transaction Hash:", res);
 
   // sleep to allow time to update
   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -122,13 +123,14 @@ const alice = async () => {
   const encodedEscrowState = escrowAccount.data;
   const decodedEscrowState =
     ESCROW_ACCOUNT_DATA_LAYOUT.decode(encodedEscrowState);
+  console.log(decodedEscrowState);
 
   if (!decodedEscrowState.isInitialized) {
     logError("Escrow state initialization flag has not been set");
     process.exit(1);
   } else if (
     !new PublicKey(decodedEscrowState.initializerPubkey).equals(
-      aliceKeypair.publicKey
+      initializerAccount.publicKey
     )
   ) {
     logError(
@@ -148,7 +150,7 @@ const alice = async () => {
   console.log(
     `✨Escrow successfully initialized. Alice is offering ${terms.bobExpectedAmount}Usdc\n`
   );
-  writePublicKey(escrowKeypair.publicKey, "escrow");
+  writePublicKey(initializerAccount.publicKey, "escrow");
   console.table([
     {
       "Alice Token Account Usdc": await getTokenBalance(
