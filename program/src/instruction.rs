@@ -13,10 +13,9 @@ pub enum EscrowInstruction {
     ///
     /// 0. `[signer]` The account of the person initializing the escrow
     /// 1. `[writable]` Temporary token account that should be created prior to this instruction and owned by the initializer
-    /// 2. `[]` The receiver account
-    /// 3. `[writable]` The escrow account, it will hold all necessary info about the trade.
-    /// 4. `[]` The rent sysvar
-    /// 5. `[]` The token program
+    /// 2. `[writable]` The escrow account, it will hold all necessary info about the trade.
+    /// 3. `[]` The rent sysvar
+    /// 4. `[]` The token program
     InitEscrow {
         /// The amount party A is about to send
         amount: u64,

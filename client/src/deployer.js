@@ -5,7 +5,7 @@ const {
 } = require('./network');
 
 const programData = fs.readFileSync('./dist/program/solana_escrow.so');
-const schema = require('../configs/schema.json');
+const schema = require('../../configs/schema.json');
 
 (async () => {
   const connection = await establishConnection();

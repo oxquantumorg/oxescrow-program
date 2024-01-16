@@ -1,6 +1,6 @@
 {
   "network": {
-    "devnet": "https://api.devnet.solana.com",
+    "devnet": "http://127.0.0.1:8899",
     "testnet": "",
     "mainnet": ""
   },

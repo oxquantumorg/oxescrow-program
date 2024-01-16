@@ -1,0 +1,35 @@
+{
+  "name": "solana_escrow",
+  "version": "0.0.1",
+  "description": "An escrow program (smart contract) built for the Solana blockchain",
+  "main": "",
+  "testnetDefaultChannel": "v1.4.8",
+  "scripts": {
+    "compile": "tsc -p ./tsconfig.json",
+    "build": "cargo build-bpf --manifest-path=../program/Cargo.toml --bpf-out-dir=dist/program",
+    "deploy": "node ./client/deployer.js",
+    "oracle": "node ./client/oracle.js",
+    "setup": "npm run compile && node build/setup.js",
+    "alice": "npm run compile && node build/alice.js"
+  },
+  "author": "BigChiano",
+  "dependencies": {
+    "@solana/spl-token": "^0.3.11",
+    "@solana/web3.js": "^1.89.1",
+    "bn.js": "^5.2.0",
+    "fs": "0.0.1-security",
+    "path": "^0.12.7",
+    "soprox-abi": "0.0.13"
+  },
+  "devDependencies": {
+    "@types/bs58": "^4.0.1",
+    "@typescript-eslint/eslint-plugin": "^4.31.2",
+    "@typescript-eslint/parser": "^4.31.2",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-unused-imports": "^1.1.5",
+    "prettier": "^2.4.1",
+    "typescript": "^4.4.3"
+  }
+}
