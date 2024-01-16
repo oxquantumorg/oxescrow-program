@@ -12,7 +12,7 @@ const { writePublicKey, getKeypair } = require("./utils");
 (async () => {
   const connection = await establishConnection();
   const payer = await getKeypair("id");
-  const program = await loadProgram(programData, payer, connection, false);
+  const program = await loadProgram(programData, payer, connection, true);
   const registers = await loadRegisters(schema, payer, program, connection);
 
   console.log("Deployment Info:");

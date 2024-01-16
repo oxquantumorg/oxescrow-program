@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
+      "strict": true,
+      "module": "commonjs",
       "rootDir": "./src",
       "outDir": "./build",
       "lib": ["ESNext"],
-      "strict": true,
       "skipLibCheck": true,
       "allowJs": true,
       "types": [ "node" ],

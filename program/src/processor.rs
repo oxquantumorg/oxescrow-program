@@ -17,7 +17,6 @@ impl Processor {
 
         match instruction {
             EscrowInstruction::InitEscrow { amount } => {
-                msg!("Instruction: InitEscrow");
                 Self::process_init_escrow(accounts, amount, program_id)
             },
             EscrowInstruction::ReleaseEscrow => {
@@ -42,6 +41,7 @@ impl Processor {
         amount: u64,
         program_id: &Pubkey,
     ) -> Result<Escrow, ProgramError>  {
+        msg!("Escrow starting!");
         let account_info_iter = &mut accounts.iter();
         let initializer = next_account_info(account_info_iter)?;
 
@@ -50,7 +50,6 @@ impl Processor {
         }
 
         let temp_token_account = next_account_info(account_info_iter)?;
-
         let escrow_account = next_account_info(account_info_iter)?;
         let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
 
@@ -58,8 +57,9 @@ impl Processor {
             return Err(EscrowError::NotRentExempt.into());
         }
 
-        let mut escrow_info = Escrow::unpack_unchecked(&escrow_account.try_borrow_data()?)?;
-        let mut escrow_info_copy = Escrow::unpack_unchecked(&escrow_account.try_borrow_data()?)?;
+        msg!("Escrow unpacking!");
+        let mut escrow_info = Escrow::unpack_from_slice(&escrow_account.try_borrow_data()?)?;
+        let mut escrow_info_copy = Escrow::unpack_from_slice(&escrow_account.try_borrow_data()?)?;
         if escrow_info.is_initialized() {
             return Err(ProgramError::AccountAlreadyInitialized);
         }
@@ -76,6 +76,7 @@ impl Processor {
         escrow_info_copy.escrow_amount = amount;
         escrow_info_copy.expire_date = Clock::get().unwrap().unix_timestamp + 20000;
         
+        msg!("Escrow packing!");
         Escrow::pack(escrow_info, &mut escrow_account.try_borrow_mut_data()?)?;
         let (pda, _bump_seed) = Pubkey::find_program_address(&[b"escrow"], program_id);
 

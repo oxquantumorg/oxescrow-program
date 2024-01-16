@@ -7,10 +7,12 @@
   "scripts": {
     "compile": "tsc -p ./tsconfig.json",
     "build": "cargo build-bpf --manifest-path=../program/Cargo.toml --bpf-out-dir=dist/program",
+    "redeploy": "npm run compile && node ./build/fresh-deploy.js",
     "deploy": "npm run compile && node ./build/deployer.js",
     "oracle": "npm run compile && node ./build/oracle.js",
     "setup": "npm run compile && node build/setup.js",
-    "alice": "npm run compile && node build/alice.js"
+    "alice": "npm run compile && node build/alice.js",
+    "all-alice": "npm run build && npm run redeploy && npm run alice"
   },
   "author": "BigChiano",
   "dependencies": {

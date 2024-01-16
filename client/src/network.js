@@ -73,11 +73,11 @@ const deployRegister = async (space, payer, programId, connection) => {
 /**
  * Load the escrow BPF program if not already loaded
  */
-const loadProgram = async (data, payer, connection) => {
+const loadProgram = async (data, payer, connection, redeploy = false) => {
   const filename = 'program';
   // Check if the program has already been loaded
   const config = store.load(filename);
-  history: if (config) {
+  history: if (config && !redeploy) {
     const { address, data: prevData } = config;
     if (Buffer.from(data).toString('hex') != prevData) break history;
     console.log('The program has been loaded at:', address);

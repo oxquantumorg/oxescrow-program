@@ -89,7 +89,7 @@ const alice = async () => {
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     ],
     data: Buffer.from(
-      Uint8Array.of(0, ...new BN(terms.aliceExpectedAmount).toArray("le", 8))
+      Uint8Array.of(0, ...new BN(terms.aliceExpectedAmount).toArray("le", 1))
     ),
   });
 
@@ -106,6 +106,7 @@ const alice = async () => {
     tempUsdcTokenAccountKeypair,
     escrowKeypair,
   ]);
+  console.log("Escrow Account:", escrowKeypair.publicKey);
   console.log("Transaction Hash:", res);
 
   // sleep to allow time to update
@@ -123,7 +124,7 @@ const alice = async () => {
   const encodedEscrowState = escrowAccount.data;
   const decodedEscrowState =
     ESCROW_ACCOUNT_DATA_LAYOUT.decode(encodedEscrowState);
-  console.log(decodedEscrowState);
+  console.log("Escrow state:", decodedEscrowState);
 
   if (!decodedEscrowState.isInitialized) {
     logError("Escrow state initialization flag has not been set");
