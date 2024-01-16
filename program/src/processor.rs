@@ -97,8 +97,10 @@ impl Processor {
                 temp_token_account.clone(),
                 initializer.clone(),
                 token_program.clone(),
-            ],
-        )?;
+                ],
+            )?;
+
+        msg!("Escrow creation was successful");
         Ok(escrow_info_copy)
     }
    
