@@ -50,6 +50,7 @@ impl Processor {
         }
 
         let temp_token_account = next_account_info(account_info_iter)?;
+        let receiver_account = next_account_info(account_info_iter)?;
         let escrow_account = next_account_info(account_info_iter)?;
         let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
 
@@ -66,12 +67,14 @@ impl Processor {
 
         escrow_info.is_initialized = true;
         escrow_info.initializer_pubkey = *initializer.key;
+        escrow_info.receiver_pubkey = *receiver_account.key;
         escrow_info.temp_token_account_pubkey = *temp_token_account.key;
         escrow_info.escrow_amount = amount;
         escrow_info.expire_date = Clock::get().unwrap().unix_timestamp + 20000;
 
         escrow_info_copy.is_initialized = true;
         escrow_info_copy.initializer_pubkey = *initializer.key;
+        escrow_info_copy.receiver_pubkey = *receiver_account.key;
         escrow_info_copy.temp_token_account_pubkey = *temp_token_account.key;
         escrow_info_copy.escrow_amount = amount;
         escrow_info_copy.expire_date = Clock::get().unwrap().unix_timestamp + 20000;
