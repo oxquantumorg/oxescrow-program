@@ -8,5 +8,6 @@
       "skipLibCheck": true,
       "allowJs": true,
       "types": [ "node" ],
+      "noImplicitAny": false
   }
 }
