@@ -9,6 +9,7 @@ use solana_program::{
 };
 
 use crate::{instruction::EscrowInstruction, error::EscrowError, state::Escrow};
+use spl_token::state::Account as TokenAccount;
 
 pub struct Processor;
 impl Processor {
@@ -112,28 +113,29 @@ impl Processor {
         program_id: &Pubkey,
     ) -> Result<Escrow, ProgramError> {
         let account_info_iter = &mut accounts.iter();
-        let taker = next_account_info(account_info_iter)?;
-    
-        if !taker.is_signer {
-            return Err(ProgramError::MissingRequiredSignature);
-        }
-    
-        let takers_token_to_receive_account = next_account_info(account_info_iter)?;
-    
+
+        let taker_account = next_account_info(account_info_iter)?;
+        let receiver_token_account = next_account_info(account_info_iter)?;
         let pdas_temp_token_account = next_account_info(account_info_iter)?;
-        let (pda, bump_seed) = Pubkey::find_program_address(&[b"escrow"], program_id);
-    
         let initializers_main_account = next_account_info(account_info_iter)?;
         let escrow_account = next_account_info(account_info_iter)?;
-    
+        let token_program = next_account_info(account_info_iter)?;
+        let pda_account = next_account_info(account_info_iter)?;
+
+        let (pda, bump_seed) = Pubkey::find_program_address(&[b"escrow"], program_id);
         let escrow_info = Escrow::unpack(&escrow_account.try_borrow_data()?)?;
         let current_timestamp = Clock::get().unwrap().unix_timestamp;
+        let receiver_token_account_info = TokenAccount::unpack(&receiver_token_account.try_borrow_data()?)?;
+
+        if !taker_account.is_signer {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
 
         if current_timestamp < escrow_info.expire_date {
             return Err(EscrowError::EscrowNotMaturedYet.into());
         }
     
-        if escrow_info.receiver_pubkey != *taker.key {
+        if escrow_info.receiver_pubkey != receiver_token_account_info.owner {
             return Err(ProgramError::InvalidAccountData);
         }
 
@@ -145,13 +147,11 @@ impl Processor {
             return Err(ProgramError::InvalidAccountData);
         }
     
-        let token_program = next_account_info(account_info_iter)?;
-        let pda_account = next_account_info(account_info_iter)?;
 
         let transfer_to_taker_ix = spl_token::instruction::transfer(
             token_program.key,
             pdas_temp_token_account.key,
-            takers_token_to_receive_account.key,
+            receiver_token_account.key,
             &pda,
             &[&pda],
             escrow_info.escrow_amount,
@@ -161,7 +161,7 @@ impl Processor {
             &transfer_to_taker_ix,
             &[
                 pdas_temp_token_account.clone(),
-                takers_token_to_receive_account.clone(),
+                receiver_token_account.clone(),
                 pda_account.clone(),
                 token_program.clone(),
             ],
