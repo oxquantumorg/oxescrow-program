@@ -123,7 +123,7 @@ impl Processor {
         let pda_account = next_account_info(account_info_iter)?;
 
         let (pda, bump_seed) = Pubkey::find_program_address(&[b"escrow"], program_id);
-        let escrow_info = Escrow::unpack(&escrow_account.try_borrow_data()?)?;
+        let escrow_info = Escrow::unpack_from_slice(&escrow_account.try_borrow_data()?)?;
         let current_timestamp = Clock::get().unwrap().unix_timestamp;
         let receiver_token_account_info = TokenAccount::unpack(&receiver_token_account.try_borrow_data()?)?;
 
@@ -147,7 +147,6 @@ impl Processor {
             return Err(ProgramError::InvalidAccountData);
         }
     
-
         let transfer_to_taker_ix = spl_token::instruction::transfer(
             token_program.key,
             pdas_temp_token_account.key,
