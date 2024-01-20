@@ -12,7 +12,9 @@
     "oracle": "npm run compile && node ./build/oracle.js",
     "setup": "npm run compile && node build/setup.js",
     "alice": "npm run compile && node build/alice.js",
-    "all-alice": "npm run build && npm run redeploy && npm run alice"
+    "bob": "npm run compile && node build/bob.js",
+    "all-alice": "npm run build && npm run redeploy && npm run alice",
+    "all-bob": "npm run build && npm run redeploy && npm run alice && npm run bob"
   },
   "author": "BigChiano",
   "dependencies": {

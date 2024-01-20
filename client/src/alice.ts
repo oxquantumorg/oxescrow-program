@@ -156,7 +156,7 @@ const alice = async () => {
   console.log(
     `✨Escrow successfully initialized. Alice is offering ${terms.bobExpectedAmount}Usdc\n`
   );
-  writePublicKey(initializerAccount.publicKey, "escrow");
+  writePublicKey(escrowKeypair.publicKey, "escrow");
   console.table([
     {
       "Alice Token Account Usdc": await getTokenBalance(

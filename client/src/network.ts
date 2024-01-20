@@ -16,7 +16,7 @@ const escrowConfig = require("../solana.escrow.config.json");
 /**
  * Establish a connection to the cluster
  */
-const establishConnection = async () => {
+export const establishConnection = async () => {
   const connection = new Connection(escrowConfig.network.devnet, "recent");
   const version = await connection.getVersion();
   console.log(
@@ -30,7 +30,7 @@ const establishConnection = async () => {
 /**
  * Establish an account to pay for everything
  */
-const loadPayer = async () => {
+export const loadPayer = async () => {
   const keypair = escrowConfig.keypairPath;
 
   if (!keypair) throw new Error("Payer not set up yet");
@@ -44,7 +44,7 @@ const loadPayer = async () => {
 /**
  * Deploy a program to the cluster
  */
-const deployProgram = async (data, payer, connection) => {
+export const deployProgram = async (data, payer, connection) => {
   const program = new Account();
   await BpfLoader.load(connection, payer, program, data, BPF_LOADER_PROGRAM_ID);
   return program;
@@ -53,7 +53,7 @@ const deployProgram = async (data, payer, connection) => {
 /**
  * Deploy a register to the cluster
  */
-const deployRegister = async (space, payer, programId, connection) => {
+export const deployRegister = async (space, payer, programId, connection) => {
   const register = new Account();
   const transaction = new Transaction();
   const lamports = await connection.getMinimumBalanceForRentExemption(space);
@@ -76,7 +76,7 @@ const deployRegister = async (space, payer, programId, connection) => {
 /**
  * Load the escrow BPF program if not already loaded
  */
-const loadProgram = async (data, payer, connection, redeploy = false) => {
+export const loadProgram = async (data, payer, connection, redeploy = false) => {
   const filename = "program";
   // Check if the program has already been loaded
   const config = store.load(filename);
@@ -110,7 +110,7 @@ const loadProgram = async (data, payer, connection, redeploy = false) => {
 /**
  * Load registers
  */
-const loadRegisters = async (schema, payer, program, connection) => {
+export const loadRegisters = async (schema, payer, program, connection) => {
   const filename = "abi";
   const data = store.load(filename);
 
@@ -143,13 +143,4 @@ const loadRegisters = async (schema, payer, program, connection) => {
     register.publicKey = new PublicKey(register.address);
     return register;
   });
-};
-
-export default {
-  establishConnection,
-  loadPayer,
-  deployProgram,
-  deployRegister,
-  loadProgram,
-  loadRegisters,
 };
