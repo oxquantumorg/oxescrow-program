@@ -39,7 +39,7 @@ const alice = async () => {
 
   const tempUsdcTokenAccountKeypair = new Account();
 
-  const createTempTokenAccountIUsdc = SystemProgram.createAccount({
+  const tempTokenAccountIX = SystemProgram.createAccount({
     programId: TOKEN_PROGRAM_ID,
     space: AccountLayout.span,
     lamports: await connection.getMinimumBalanceForRentExemption(
@@ -48,7 +48,7 @@ const alice = async () => {
     fromPubkey: initializerAccount.publicKey,
     newAccountPubkey: tempUsdcTokenAccountKeypair.publicKey,
   });
-  const initTempAccountIUsdc = createInitializeAccountInstruction(
+  const initTempAccountIX = createInitializeAccountInstruction(
     tempUsdcTokenAccountKeypair.publicKey,
     usdcTokenMintPubkey,
     initializerAccount.publicKey
@@ -99,8 +99,8 @@ const alice = async () => {
   });
 
   const tx = new Transaction().add(
-    createTempTokenAccountIUsdc,
-    initTempAccountIUsdc,
+    tempTokenAccountIX,
+    initTempAccountIX,
     transferUsdcTokensToTempAccIUsdc,
     createEscrowAccountIUsdc,
     initEscrowIUsdc
