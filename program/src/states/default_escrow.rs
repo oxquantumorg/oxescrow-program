@@ -1,12 +1,12 @@
 use solana_program::{
-    program_pack::{IsInitialized, Pack, Sealed},
     program_error::ProgramError,
+    program_pack::{IsInitialized, Pack, Sealed},
     pubkey::Pubkey,
 };
 
 use arrayref::{array_mut_ref, array_ref, array_refs, mut_array_refs};
 
-pub struct Escrow {
+pub struct EscrowState {
     pub is_initialized: bool,
     pub initializer_pubkey: Pubkey,
     pub receiver_pubkey: Pubkey,
@@ -15,18 +15,19 @@ pub struct Escrow {
     pub expire_date: i64,
 }
 
-impl Sealed for Escrow {}
+impl Sealed for EscrowState {}
 
-impl IsInitialized for Escrow {
+impl IsInitialized for EscrowState {
     fn is_initialized(&self) -> bool {
         self.is_initialized
     }
 }
 
-impl Pack for Escrow {
+impl Pack for EscrowState {
     const LEN: usize = 113;
+
     fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
-        let src = array_ref![src, 0, Escrow::LEN];
+        let src = array_ref![src, 0, EscrowState::LEN];
         let (
             is_initialized,
             initializer_pubkey,
@@ -41,7 +42,7 @@ impl Pack for Escrow {
             _ => return Err(ProgramError::InvalidAccountData),
         };
 
-        Ok(Escrow {
+        Ok(EscrowState {
             is_initialized,
             initializer_pubkey: Pubkey::new_from_array(*initializer_pubkey),
             receiver_pubkey: Pubkey::new_from_array(*receiver_pubkey),
@@ -52,7 +53,7 @@ impl Pack for Escrow {
     }
 
     fn pack_into_slice(&self, dst: &mut [u8]) {
-        let dst = array_mut_ref![dst, 0, Escrow::LEN];
+        let dst = array_mut_ref![dst, 0, EscrowState::LEN];
         let (
             is_initialized_dst,
             initializer_pubkey_dst,
@@ -62,7 +63,7 @@ impl Pack for Escrow {
             expire_date_dst,
         ) = mut_array_refs![dst, 1, 32, 32, 32, 8, 8];
 
-        let Escrow {
+        let EscrowState {
             is_initialized,
             initializer_pubkey,
             receiver_pubkey,
@@ -77,18 +78,5 @@ impl Pack for Escrow {
         temp_token_account_pubkey_dst.copy_from_slice(temp_token_account_pubkey.as_ref());
         *escrow_amount_dst = escrow_amount.to_le_bytes();
         *expire_date_dst = expire_date.to_le_bytes();
-    }
-}
-
-impl Default for Escrow {
-    fn default() -> Self {
-        Escrow {
-            is_initialized: Default::default(),
-            initializer_pubkey: Default::default(),
-            receiver_pubkey: Default::default(),
-            temp_token_account_pubkey: Default::default(),
-            escrow_amount: Default::default(),
-            expire_date: Default::default(),
-        }
     }
 }
