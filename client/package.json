@@ -13,6 +13,7 @@
     "setup": "npm run compile && node build/setup.js",
     "alice": "npm run compile && node build/alice.js",
     "bob": "npm run compile && node build/bob.js",
+    "mintUsdc": "npm run compile && node build/mintUsdc.js",
     "all-alice": "npm run build && npm run redeploy && npm run alice",
     "all-bob": "npm run build && npm run redeploy && npm run alice && npm run bob"
   },

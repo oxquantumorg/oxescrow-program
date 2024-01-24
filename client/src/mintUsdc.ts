@@ -5,11 +5,7 @@ import {
   Signer,
 } from "@solana/web3.js";
 
-import {
-  createAssociatedTokenAccount,
-  createMint,
-  mintTo,
-} from "@solana/spl-token";
+import { createAssociatedTokenAccount, mintTo } from "@solana/spl-token";
 import {
   getKeypair,
   getPublicKey,
@@ -19,23 +15,11 @@ import {
 
 const escrowConfig = require("../solana.escrow.config.json");
 
-const createMintUsdc = (
-  connection: Connection,
-  { publicKey, secretKey }: Signer
-) => {
-  return createMint(
-    connection,
-    {
-      publicKey,
-      secretKey,
-    },
-    publicKey,
-    null,
-    0
-  );
+const getMintUsdc = () => {
+  return getPublicKey("mint_usdc");
 };
 
-const setupMint = async (
+const mintUsdc = async (
   name: string,
   connection: Connection,
   alicePublicKey: PublicKey,
@@ -43,7 +27,7 @@ const setupMint = async (
   clientKeypair: Signer
 ) => {
   console.log(`Creating Mint ${name}...`);
-  const mint = await createMintUsdc(connection, clientKeypair);
+  const mint = await getMintUsdc();
   writePublicKey(mint, `mint_${name.toLowerCase()}`);
 
   console.log(`Creating Alice TokenAccount for ${name}...`);
@@ -86,7 +70,7 @@ const setup = async () => {
   );
 
   const [mint, aliceTokenAccountForUsdc, bobTokenAccountForUsdc] =
-    await setupMint(
+    await mintUsdc(
       "Usdc",
       connection,
       alicePublicKey,
