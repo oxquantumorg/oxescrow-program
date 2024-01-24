@@ -1,11 +1,12 @@
 pub mod instructions;
 pub mod utils;
 pub mod states;
+pub mod route;
 
 use solana_program::{
     account_info::AccountInfo, entrypoint, entrypoint::ProgramResult, msg, pubkey::Pubkey,
 };
-use crate::states::escrow_instruction::EscrowInstruction;
+use crate::route::EscrowRoutes;
 use crate::instructions::default_escrow;
 
 entrypoint!(process_instruction);
@@ -14,22 +15,22 @@ pub fn process_instruction(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let instruction = EscrowInstruction::unpack(instruction_data)?;
+    let instruction = EscrowRoutes::unpack(instruction_data)?;
 
     match instruction {
-        EscrowInstruction::InitEscrow { amount } => {
+        EscrowRoutes::InitEscrow { amount } => {
             msg!("Instruction: Init Escrow");
             let _ = default_escrow::init_escrow::handler(accounts, amount, program_id);
         }
-        EscrowInstruction::ReleaseEscrow => {
+        EscrowRoutes::ReleaseEscrow => {
             msg!("Instruction: Release Escrow");
             let _ = default_escrow::release_escrow::handler(accounts, program_id);
         }
-        EscrowInstruction::CollectDeposit => {
+        EscrowRoutes::CollectDeposit => {
             msg!("Instruction: Oracle Call");
             let _ = default_escrow::oracle_call::handler(accounts, program_id);
         }
-        EscrowInstruction::Oracle => {
+        EscrowRoutes::Oracle => {
             msg!("Instruction: Oracle Call");
             let _ = default_escrow::oracle_call::handler(accounts, program_id);
         }

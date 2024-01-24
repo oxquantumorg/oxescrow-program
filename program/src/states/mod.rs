@@ -1,2 +1,2 @@
 pub mod default_escrow;
-pub mod escrow_instruction;
+pub mod wallet_escrow;
