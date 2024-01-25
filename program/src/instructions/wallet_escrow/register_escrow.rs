@@ -78,6 +78,6 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
         ],
     )?;
 
-    msg!("Escrow creation was successful");
+    msg!("Escrow have bee registered successfully");
     Ok(())
 }
