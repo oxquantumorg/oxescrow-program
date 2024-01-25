@@ -10,7 +10,10 @@ use solana_program::{
     sysvar::{rent::Rent, Sysvar},
 };
 
-use crate::{states::wallet_escrow::WalletEscrowState, utils::errors::EscrowError};
+use crate::{
+    states::wallet_escrow::WalletEscrowState,
+    utils::{self, errors::EscrowError},
+};
 
 /** Initialize Escrow
 **/
@@ -52,7 +55,8 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
 
     msg!("Escrow packing!");
     WalletEscrowState::pack(escrow_info, &mut escrow_account.try_borrow_mut_data()?)?;
-    let (pda, _bump_seed) = Pubkey::find_program_address(&[b"escrow"], program_id);
+    let (pda, _bump_seed) =
+        Pubkey::find_program_address(&[utils::constants::ESCROW_SEED], program_id);
 
     let token_program = next_account_info(account_info_iter)?;
     let owner_change_ix = spl_token::instruction::set_authority(

@@ -4,7 +4,10 @@ use solana_program::{
     program_pack::Pack, pubkey::Pubkey, sysvar::Sysvar,
 };
 
-use crate::{utils::errors::EscrowError, states::default_escrow::EscrowState};
+use crate::{
+    states::default_escrow::EscrowState,
+    utils::{errors::EscrowError, token_lib, constants},
+};
 use spl_token::state::Account as TokenAccount;
 
 /// Release Escrow Funds
@@ -29,7 +32,7 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
     let token_program = next_account_info(account_info_iter)?;
     let pda_account = next_account_info(account_info_iter)?;
 
-    let (pda, bump_seed) = Pubkey::find_program_address(&[b"escrow"], program_id);
+    let (pda, bump_seed) = Pubkey::find_program_address(&[constants::ESCROW_SEED], program_id);
     let escrow_info = EscrowState::unpack_from_slice(&escrow_account.try_borrow_data()?)?;
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
     let receiver_token_account_info =
@@ -55,25 +58,23 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let transfer_to_taker_ix = spl_token::instruction::transfer(
-        token_program.key,
-        pdas_temp_token_account.key,
-        receiver_token_account.key,
-        &pda,
-        &[&pda],
-        escrow_info.escrow_amount,
-    )?;
-    msg!("Calling the token program to transfer tokens to the taker...");
-    invoke_signed(
-        &transfer_to_taker_ix,
-        &[
-            pdas_temp_token_account.clone(),
-            receiver_token_account.clone(),
-            pda_account.clone(),
-            token_program.clone(),
-        ],
-        &[&[&b"escrow"[..], &[bump_seed]]],
-    )?;
+    let amount = escrow_info.escrow_amount;
+    let account_infos = &[
+        pdas_temp_token_account.clone(),
+        receiver_token_account.clone(),
+        pda_account.clone(),
+        token_program.clone(),
+    ];
+
+    let _ = token_lib::transfer_tokens(
+        token_program.clone(),
+        pdas_temp_token_account.clone(),
+        receiver_token_account.clone(),
+        pda,
+        amount,
+        account_infos,
+        bump_seed,
+    );
 
     let close_pdas_temp_acc_ix = spl_token::instruction::close_account(
         token_program.key,
@@ -91,7 +92,7 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
             pda_account.clone(),
             token_program.clone(),
         ],
-        &[&[&b"escrow"[..], &[bump_seed]]],
+        &[&[&constants::ESCROW_SEED[..], &[bump_seed]]],
     )?;
 
     msg!("Closing the escrow account...");
