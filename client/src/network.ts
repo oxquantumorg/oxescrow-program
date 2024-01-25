@@ -17,11 +17,11 @@ const escrowConfig = require("../solana.escrow.config.json");
  * Establish a connection to the cluster
  */
 export const establishConnection = async () => {
-  const connection = new Connection(escrowConfig.network.devnet, "recent");
+  const connection = new Connection(escrowConfig.network.localhost, "recent");
   const version = await connection.getVersion();
   console.log(
     "Connection to cluster established:",
-    escrowConfig.network.devnet,
+    escrowConfig.network.localhost,
     version
   );
   return connection;
@@ -76,7 +76,12 @@ export const deployRegister = async (space, payer, programId, connection) => {
 /**
  * Load the escrow BPF program if not already loaded
  */
-export const loadProgram = async (data, payer, connection, redeploy = false) => {
+export const loadProgram = async (
+  data,
+  payer,
+  connection,
+  redeploy = false
+) => {
   const filename = "program";
   // Check if the program has already been loaded
   const config = store.load(filename);
