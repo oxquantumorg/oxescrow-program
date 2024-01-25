@@ -5,28 +5,28 @@ use solana_program::{
 };
 
 use arrayref::{array_mut_ref, array_ref, array_refs, mut_array_refs};
-use crate::utils::constants::WALLET_ESCROW_STATE_LEN;
+use crate::utils::constants::ESCROW_REGISTRY_STATE_LEN;
 
-pub struct WalletEscrowState {
+pub struct EscrowRegistryState {
     pub is_initialized: bool,
     pub initializer_pubkey: Pubkey,
     pub receiver_pubkey: Pubkey,
     pub token_account_pubkey: Pubkey,
 }
 
-impl Sealed for WalletEscrowState {}
+impl Sealed for EscrowRegistryState {}
 
-impl IsInitialized for WalletEscrowState {
+impl IsInitialized for EscrowRegistryState {
     fn is_initialized(&self) -> bool {
         self.is_initialized
     }
 }
 
-impl Pack for WalletEscrowState {
-    const LEN: usize = WALLET_ESCROW_STATE_LEN;
+impl Pack for EscrowRegistryState {
+    const LEN: usize = ESCROW_REGISTRY_STATE_LEN;
 
     fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
-        let src = array_ref![src, 0, WalletEscrowState::LEN];
+        let src = array_ref![src, 0, EscrowRegistryState::LEN];
         let (
             is_initialized,
             initializer_pubkey,
@@ -39,7 +39,7 @@ impl Pack for WalletEscrowState {
             _ => return Err(ProgramError::InvalidAccountData),
         };
 
-        Ok(WalletEscrowState {
+        Ok(EscrowRegistryState {
             is_initialized,
             initializer_pubkey: Pubkey::new_from_array(*initializer_pubkey),
             receiver_pubkey: Pubkey::new_from_array(*receiver_pubkey),
@@ -48,7 +48,7 @@ impl Pack for WalletEscrowState {
     }
 
     fn pack_into_slice(&self, dst: &mut [u8]) {
-        let dst = array_mut_ref![dst, 0, WalletEscrowState::LEN];
+        let dst = array_mut_ref![dst, 0, EscrowRegistryState::LEN];
         let (
             is_initialized_dst,
             initializer_pubkey_dst,
@@ -56,7 +56,7 @@ impl Pack for WalletEscrowState {
             token_account_pubkey_dst
         ) = mut_array_refs![dst, 1, 32, 32, 32];
 
-        let WalletEscrowState {
+        let EscrowRegistryState {
             is_initialized,
             initializer_pubkey,
             receiver_pubkey,

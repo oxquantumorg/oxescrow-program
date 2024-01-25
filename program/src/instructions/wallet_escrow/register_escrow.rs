@@ -11,7 +11,7 @@ use solana_program::{
 };
 
 use crate::{
-    states::wallet_escrow::WalletEscrowState,
+    states::escrow_registry::EscrowRegistryState,
     utils::{self, errors::EscrowError},
 };
 
@@ -43,18 +43,18 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
     }
 
     msg!("Escrow unpacking!");
-    let mut escrow_info = WalletEscrowState::unpack_from_slice(&escrow_account.try_borrow_data()?)?;
-    if escrow_info.is_initialized() {
+    let mut escrow_wallet_registry = EscrowRegistryState::unpack_from_slice(&escrow_account.try_borrow_data()?)?;
+    if escrow_wallet_registry.is_initialized() {
         return Err(ProgramError::AccountAlreadyInitialized);
     }
 
-    escrow_info.is_initialized = true;
-    escrow_info.initializer_pubkey = *initializer.key;
-    escrow_info.receiver_pubkey = *receiver_account.key;
-    escrow_info.token_account_pubkey = *temp_token_account.key;
+    escrow_wallet_registry.is_initialized = true;
+    escrow_wallet_registry.initializer_pubkey = *initializer.key;
+    escrow_wallet_registry.receiver_pubkey = *receiver_account.key;
+    escrow_wallet_registry.token_account_pubkey = *temp_token_account.key;
 
     msg!("Escrow packing!");
-    WalletEscrowState::pack(escrow_info, &mut escrow_account.try_borrow_mut_data()?)?;
+    EscrowRegistryState::pack(escrow_wallet_registry, &mut escrow_account.try_borrow_mut_data()?)?;
     let (pda, _bump_seed) =
         Pubkey::find_program_address(&[utils::constants::ESCROW_SEED], program_id);
 
