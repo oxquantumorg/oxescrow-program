@@ -1,9 +1,4 @@
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Signer,
-} from "@solana/web3.js";
+import { Connection, PublicKey, Signer } from "@solana/web3.js";
 
 import {
   createAssociatedTokenAccount,
@@ -43,6 +38,8 @@ const setupMint = async (
 ) => {
   console.log(`Creating Mint ${name}...`);
   const mint = await createMintUsdc(connection, clientKeypair);
+  console.log(mint);
+
   writePublicKey(mint, `mint_${name.toLowerCase()}`);
 
   console.log(`Creating Alice TokenAccount for ${name}...`);
@@ -73,16 +70,16 @@ const setup = async () => {
   const clientKeypair = getKeypair("id");
 
   const connection = await establishConnection();
-  console.log("Requesting SOL for Alice...");
-  // some networks like the local network provide an airdrop function (mainnet of course does not)
-  await connection.requestAirdrop(alicePublicKey, LAMPORTS_PER_SOL * 10);
-  console.log("Requesting SOL for Bob...");
-  await connection.requestAirdrop(bobPublicKey, LAMPORTS_PER_SOL * 10);
-  console.log("Requesting SOL for Client...");
-  await connection.requestAirdrop(
-    clientKeypair.publicKey,
-    LAMPORTS_PER_SOL * 10
-  );
+  // console.log("Requesting SOL for Alice...");
+  // // some networks like the local network provide an airdrop function (mainnet of course does not)
+  // await connection.requestAirdrop(alicePublicKey, LAMPORTS_PER_SOL * 10);
+  // console.log("Requesting SOL for Bob...");
+  // await connection.requestAirdrop(bobPublicKey, LAMPORTS_PER_SOL * 10);
+  // console.log("Requesting SOL for Client...");
+  // await connection.requestAirdrop(
+  //   clientKeypair.publicKey,
+  //   LAMPORTS_PER_SOL * 10
+  // );
 
   const [mint, aliceTokenAccountForUsdc, bobTokenAccountForUsdc] =
     await setupMint(
@@ -90,7 +87,7 @@ const setup = async () => {
       connection,
       alicePublicKey,
       bobPublicKey,
-      aliceKeypair
+      clientKeypair
     );
   console.log("Sending 50Usdc to Alice's Usdc TokenAccount...");
   await mintTo(
@@ -98,7 +95,7 @@ const setup = async () => {
     aliceKeypair,
     mint,
     aliceTokenAccountForUsdc,
-    aliceKeypair,
+    clientKeypair,
     50
   );
 
