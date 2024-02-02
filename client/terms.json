@@ -1,4 +1,3 @@
 {
-  "aliceExpectedAmount": 3,
-  "bobExpectedAmount": 5
+  "transferAmount": 2
 }

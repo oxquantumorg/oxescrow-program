@@ -23,8 +23,9 @@ use spl_token::state::Account as TokenAccount;
 /// 6. `[]` The PDA account
 pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
+    msg!("Release Escrow starting!");
 
-    let taker_account = next_account_info(account_info_iter)?;
+    // let taker_account = next_account_info(account_info_iter)?;
     let receiver_token_account = next_account_info(account_info_iter)?;
     let pdas_temp_token_account = next_account_info(account_info_iter)?;
     let initializers_main_account = next_account_info(account_info_iter)?;
@@ -33,31 +34,37 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
     let pda_account = next_account_info(account_info_iter)?;
 
     let (pda, bump_seed) = Pubkey::find_program_address(&[constants::ESCROW_SEED], program_id);
+    msg!("Unpacking Escrow!");
     let escrow_info = EscrowState::unpack_from_slice(&escrow_account.try_borrow_data()?)?;
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
     let receiver_token_account_info =
         TokenAccount::unpack(&receiver_token_account.try_borrow_data()?)?;
 
-    if !taker_account.is_signer {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
+    // if !taker_account.is_signer {
+    //     return Err(ProgramError::MissingRequiredSignature);
+    // }
 
+    msg!("Running Checks!");
     if current_timestamp < escrow_info.expire_date {
         return Err(EscrowError::EscrowNotMaturedYet.into());
     }
 
+    msg!("Running Checks: Receiver PubKey! {:?}", receiver_token_account_info);
     if escrow_info.receiver_pubkey != receiver_token_account_info.owner {
         return Err(ProgramError::InvalidAccountData);
     }
 
+    msg!("Running Checks: Pda Token PubKey!");
     if escrow_info.temp_token_account_pubkey != *pdas_temp_token_account.key {
         return Err(ProgramError::InvalidAccountData);
     }
 
+    msg!("Running Checks: Initializer PubKey!");
     if escrow_info.initializer_pubkey != *initializers_main_account.key {
         return Err(ProgramError::InvalidAccountData);
     }
 
+    msg!("Transfer Tokens!");
     let amount = escrow_info.escrow_amount;
     let account_infos = &[
         pdas_temp_token_account.clone(),
@@ -76,6 +83,7 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
         bump_seed,
     );
 
+    msg!("Closing Token Account!");
     let close_pdas_temp_acc_ix = spl_token::instruction::close_account(
         token_program.key,
         pdas_temp_token_account.key,

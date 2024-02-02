@@ -12,7 +12,7 @@ use solana_program::{
 
 use crate::{
     states::default_escrow::EscrowState,
-    utils::{errors::EscrowError, token_lib},
+    utils::{self, errors::EscrowError, token_lib},
 };
 
 /** Initialize Escrow
@@ -21,23 +21,24 @@ use crate::{
 /// Accounts expected:
 ///
 /// 0. `[signer]` The account of the person initializing the escrow
-/// 1. `[writable]` Temporary token account that should be created prior to this instruction and owned by the initializer
-/// 2. `[writable]` The escrow account, it will hold all necessary info about the trade.
-/// 3. `[]` The rent sysvar
-/// 4. `[]` The token program
+/// 1. `[]` The account of the receiver
+/// 2. `[writable]` Temporary token account that should be created prior to this instruction and owned by the initializer
+/// 3. `[writable]` The escrow account, it will hold all necessary info about the trade.
+/// 4. `[]` The rent sysvar
+/// 5. `[]` The token program
 pub fn handler(accounts: &[AccountInfo], amount: u64, program_id: &Pubkey) -> ProgramResult {
     msg!("Escrow starting!");
     let account_info_iter = &mut accounts.iter();
     let initializer = next_account_info(account_info_iter)?;
+    let receiver_account = next_account_info(account_info_iter)?;
+    let temp_token_account = next_account_info(account_info_iter)?;
+    let escrow_account = next_account_info(account_info_iter)?;
+    let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
+    let token_program = next_account_info(account_info_iter)?;
 
     if !initializer.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
-
-    let temp_token_account = next_account_info(account_info_iter)?;
-    let receiver_account = next_account_info(account_info_iter)?;
-    let escrow_account = next_account_info(account_info_iter)?;
-    let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
 
     if !rent.is_exempt(escrow_account.lamports(), escrow_account.data_len()) {
         return Err(EscrowError::NotRentExempt.into());
@@ -54,12 +55,11 @@ pub fn handler(accounts: &[AccountInfo], amount: u64, program_id: &Pubkey) -> Pr
     escrow_info.receiver_pubkey = *receiver_account.key;
     escrow_info.temp_token_account_pubkey = *temp_token_account.key;
     escrow_info.escrow_amount = amount;
-    escrow_info.expire_date = Clock::get().unwrap().unix_timestamp + 20000;
+    escrow_info.expire_date = Clock::get().unwrap().unix_timestamp + utils::constants::ESCROW_WAIT_TIME_SEC;
 
     msg!("Escrow packing!");
     EscrowState::pack(escrow_info, &mut escrow_account.try_borrow_mut_data()?)?;
     let (pda, _bump_seed) = Pubkey::find_program_address(&[b"escrow"], program_id);
-    let token_program = next_account_info(account_info_iter)?;
 
     let authority_type = spl_token::instruction::AuthorityType::AccountOwner;
     let account_infos = &[

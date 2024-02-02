@@ -30,9 +30,9 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let initializer = next_account_info(account_info_iter)?;
     let temp_token_account = next_account_info(account_info_iter)?;
-    let receiver_account = next_account_info(account_info_iter)?;
     let escrow_account = next_account_info(account_info_iter)?;
     let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
+    let token_program = next_account_info(account_info_iter)?;
 
     if !initializer.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
@@ -50,15 +50,13 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
 
     escrow_wallet_registry.is_initialized = true;
     escrow_wallet_registry.initializer_pubkey = *initializer.key;
-    escrow_wallet_registry.receiver_pubkey = *receiver_account.key;
     escrow_wallet_registry.token_account_pubkey = *temp_token_account.key;
 
     msg!("Escrow packing!");
     EscrowRegistryState::pack(escrow_wallet_registry, &mut escrow_account.try_borrow_mut_data()?)?;
     let (pda, _bump_seed) =
-        Pubkey::find_program_address(&[utils::constants::ESCROW_SEED], program_id);
+        Pubkey::find_program_address(&[utils::constants::ESCROW_WALLET_SEED], program_id);
 
-    let token_program = next_account_info(account_info_iter)?;
     let owner_change_ix = spl_token::instruction::set_authority(
         token_program.key,
         temp_token_account.key,
@@ -78,6 +76,6 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
         ],
     )?;
 
-    msg!("Escrow have bee registered successfully");
+    msg!("Escrow have been registered successfully");
     Ok(())
 }

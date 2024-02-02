@@ -43,8 +43,7 @@ export const getProgramId = () => {
 };
 
 export const getTerms = (): {
-  aliceExpectedAmount: number;
-  bobExpectedAmount: number;
+  transferAmount: number;
 } => {
   return JSON.parse(fs.readFileSync(`./terms.json`) as unknown as string);
 };

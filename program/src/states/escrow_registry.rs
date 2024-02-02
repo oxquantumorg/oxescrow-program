@@ -10,7 +10,6 @@ use crate::utils::constants::ESCROW_REGISTRY_STATE_LEN;
 pub struct EscrowRegistryState {
     pub is_initialized: bool,
     pub initializer_pubkey: Pubkey,
-    pub receiver_pubkey: Pubkey,
     pub token_account_pubkey: Pubkey,
 }
 
@@ -30,9 +29,8 @@ impl Pack for EscrowRegistryState {
         let (
             is_initialized,
             initializer_pubkey,
-            receiver_pubkey,
             token_account_pubkey
-        ) = array_refs![src, 1, 32, 32, 32];
+        ) = array_refs![src, 1, 32, 32];
         let is_initialized = match is_initialized {
             [0] => false,
             [1] => true,
@@ -42,7 +40,6 @@ impl Pack for EscrowRegistryState {
         Ok(EscrowRegistryState {
             is_initialized,
             initializer_pubkey: Pubkey::new_from_array(*initializer_pubkey),
-            receiver_pubkey: Pubkey::new_from_array(*receiver_pubkey),
             token_account_pubkey: Pubkey::new_from_array(*token_account_pubkey),
         })
     }
@@ -52,20 +49,17 @@ impl Pack for EscrowRegistryState {
         let (
             is_initialized_dst,
             initializer_pubkey_dst,
-            receiver_pubkey_dst,
             token_account_pubkey_dst
-        ) = mut_array_refs![dst, 1, 32, 32, 32];
+        ) = mut_array_refs![dst, 1, 32, 32];
 
         let EscrowRegistryState {
             is_initialized,
             initializer_pubkey,
-            receiver_pubkey,
             token_account_pubkey,
         } = self;
 
         is_initialized_dst[0] = *is_initialized as u8;
         initializer_pubkey_dst.copy_from_slice(initializer_pubkey.as_ref());
-        receiver_pubkey_dst.copy_from_slice(receiver_pubkey.as_ref());
         token_account_pubkey_dst.copy_from_slice(token_account_pubkey.as_ref());
     }
 }

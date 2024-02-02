@@ -34,6 +34,7 @@ const alice = async () => {
 
   const aliceUsdcTokenAccountPubkey = getPublicKey("alice_usdc");
   const usdcTokenMintPubkey = getPublicKey("mint_usdc");
+  const bobKeypair = getKeypair("bob");
   const aliceKeypair = getKeypair("alice");
   const initializerAccount = aliceKeypair;
 
@@ -57,7 +58,7 @@ const alice = async () => {
     aliceUsdcTokenAccountPubkey,
     tempUsdcTokenAccountKeypair.publicKey,
     initializerAccount.publicKey,
-    terms.bobExpectedAmount
+    terms.transferAmount
   );
 
   const escrowKeypair = new Account();
@@ -80,21 +81,21 @@ const alice = async () => {
         isWritable: false,
       },
       {
+        pubkey: bobKeypair.publicKey,
+        isSigner: false,
+        isWritable: false,
+      },
+      {
         pubkey: tempUsdcTokenAccountKeypair.publicKey,
         isSigner: false,
         isWritable: true,
-      },
-      {
-        pubkey: aliceKeypair.publicKey,
-        isSigner: false,
-        isWritable: false,
       },
       { pubkey: escrowKeypair.publicKey, isSigner: false, isWritable: true },
       { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     ],
     data: Buffer.from(
-      Uint8Array.of(0, ...new BN(terms.aliceExpectedAmount).toArray("le", 1))
+      Uint8Array.of(0, ...new BN(terms.transferAmount).toArray("le", 1))
     ),
   });
 
@@ -154,7 +155,7 @@ const alice = async () => {
     process.exit(1);
   }
   console.log(
-    `✨Escrow successfully initialized. Alice is offering ${terms.bobExpectedAmount}Usdc\n`
+    `✨Escrow successfully initialized. Alice is offering ${terms.transferAmount}Usdc\n`
   );
   writePublicKey(escrowKeypair.publicKey, "escrow");
   console.table([

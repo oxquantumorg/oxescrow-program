@@ -11,9 +11,9 @@ import {
   getKeypair,
   getProgramId,
   getPublicKey,
-  getTerms,
   getTokenBalance,
   logError,
+  getTerms,
 } from "./utils";
 import { establishConnection } from "./network";
 
@@ -28,7 +28,7 @@ const bob = async () => {
   const escrowAccount = await connection.getAccountInfo(
     escrowStateAccountPubkey
   );
-  
+
   if (escrowAccount === null) {
     logError("Could not find escrow at given address!");
     process.exit(1);
@@ -47,7 +47,15 @@ const bob = async () => {
     usdcTokenTempAccountPubkey: new PublicKey(
       decodedEscrowLayout.initializerTempTokenAccountPubkey
     ),
-    expectedAmount: new BN(decodedEscrowLayout.expectedAmount, 10, "le"),
+    receiverAccountPubkey: new PublicKey(
+      decodedEscrowLayout.receiverAccountPubkey
+    ),
+    expectedAmount: new BN(
+      decodedEscrowLayout.expectedAmount,
+      10,
+      "le"
+    ).toString(),
+    expireDate: new BN(decodedEscrowLayout.expireDate, 10, "le").toString(),
   };
 
   const PDA = await PublicKey.findProgramAddress(
@@ -58,10 +66,9 @@ const bob = async () => {
   const exchangeInstruction = new TransactionInstruction({
     programId: escrowProgramId,
     data: Buffer.from(
-      Uint8Array.of(1, ...new BN(terms.bobExpectedAmount).toArray("le", 8))
+      Uint8Array.of(1, ...new BN(terms.transferAmount).toArray("le", 8))
     ),
     keys: [
-      { pubkey: bobKeypair.publicKey, isSigner: true, isWritable: false },
       { pubkey: bobUsdcTokenAccountPubkey, isSigner: false, isWritable: true },
       {
         pubkey: escrowState.usdcTokenTempAccountPubkey,
@@ -83,6 +90,20 @@ const bob = async () => {
     bobUsdcTokenAccountPubkey,
     connection
   );
+
+  console.log(escrowState);
+  console.table([
+    {
+      "Bob Token Account Usdc": await getTokenBalance(
+        getPublicKey("bob_usdc"),
+        connection
+      ),
+      "Temporary Token Account Usdc": await getTokenBalance(
+        escrowState.usdcTokenTempAccountPubkey,
+        connection
+      ),
+    },
+  ]);
 
   console.log("Sending Bob's transaction...");
   await connection.sendTransaction(
@@ -113,10 +134,10 @@ const bob = async () => {
     connection
   );
 
-  if (newBobUsdcbalance !== bobUsdcbalance + terms.bobExpectedAmount) {
+  if (newBobUsdcbalance !== bobUsdcbalance + terms.transferAmount) {
     logError(
       `Bob's Usdc balance should be ${
-        bobUsdcbalance + terms.bobExpectedAmount
+        bobUsdcbalance + terms.transferAmount
       } but is ${newBobUsdcbalance}`
     );
     process.exit(1);
