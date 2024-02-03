@@ -25,7 +25,6 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     msg!("Release Escrow starting!");
 
-    // let taker_account = next_account_info(account_info_iter)?;
     let receiver_token_account = next_account_info(account_info_iter)?;
     let pdas_temp_token_account = next_account_info(account_info_iter)?;
     let initializers_main_account = next_account_info(account_info_iter)?;
@@ -40,16 +39,12 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
     let receiver_token_account_info =
         TokenAccount::unpack(&receiver_token_account.try_borrow_data()?)?;
 
-    // if !taker_account.is_signer {
-    //     return Err(ProgramError::MissingRequiredSignature);
-    // }
-
     msg!("Running Checks!");
     if current_timestamp < escrow_info.expire_date {
         return Err(EscrowError::EscrowNotMaturedYet.into());
     }
 
-    msg!("Running Checks: Receiver PubKey! {:?}", receiver_token_account_info);
+    msg!("Running Checks: Receiver PubKey!");
     if escrow_info.receiver_pubkey != receiver_token_account_info.owner {
         return Err(ProgramError::InvalidAccountData);
     }
