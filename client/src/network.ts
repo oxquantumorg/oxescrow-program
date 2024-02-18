@@ -85,7 +85,7 @@ export const loadProgram = async (
   const filename = "program";
   // Check if the program has already been loaded
   const config = store.load(filename);
-  history: if (config && !redeploy) {
+  history: if (config) {
     const { address, data: prevData } = config;
     if (Buffer.from(data).toString("hex") !== prevData) break history;
     console.log("The program has been loaded at:", address);
@@ -95,6 +95,7 @@ export const loadProgram = async (
     };
     return program;
   }
+  return "";
 
   // Load the program
   const _program = await deployProgram(data, payer, connection);

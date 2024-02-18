@@ -9,6 +9,7 @@ use crate::utils::constants::DEFAULT_ESCROW_STATE_LEN;
 
 pub struct EscrowState {
     pub is_initialized: bool,
+    pub caller_pubkey: Pubkey,
     pub initializer_pubkey: Pubkey,
     pub receiver_pubkey: Pubkey,
     pub temp_token_account_pubkey: Pubkey,
@@ -31,12 +32,13 @@ impl Pack for EscrowState {
         let src = array_ref![src, 0, EscrowState::LEN];
         let (
             is_initialized,
+            caller_pubkey,
             initializer_pubkey,
             receiver_pubkey,
             temp_token_account_pubkey,
             escrow_amount,
             expire_date,
-        ) = array_refs![src, 1, 32, 32, 32, 8, 8];
+        ) = array_refs![src, 1, 32, 32, 32, 32, 8, 8];
         let is_initialized = match is_initialized {
             [0] => false,
             [1] => true,
@@ -45,6 +47,7 @@ impl Pack for EscrowState {
 
         Ok(EscrowState {
             is_initialized,
+            caller_pubkey: Pubkey::new_from_array(*caller_pubkey),
             initializer_pubkey: Pubkey::new_from_array(*initializer_pubkey),
             receiver_pubkey: Pubkey::new_from_array(*receiver_pubkey),
             temp_token_account_pubkey: Pubkey::new_from_array(*temp_token_account_pubkey),
@@ -57,15 +60,17 @@ impl Pack for EscrowState {
         let dst = array_mut_ref![dst, 0, EscrowState::LEN];
         let (
             is_initialized_dst,
+            caller_pubkey_dst,
             initializer_pubkey_dst,
             receiver_pubkey_dst,
             temp_token_account_pubkey_dst,
             escrow_amount_dst,
             expire_date_dst,
-        ) = mut_array_refs![dst, 1, 32, 32, 32, 8, 8];
+        ) = mut_array_refs![dst, 1, 32, 32, 32, 32, 8, 8];
 
         let EscrowState {
             is_initialized,
+            caller_pubkey,
             initializer_pubkey,
             receiver_pubkey,
             temp_token_account_pubkey,
@@ -74,6 +79,7 @@ impl Pack for EscrowState {
         } = self;
 
         is_initialized_dst[0] = *is_initialized as u8;
+        caller_pubkey_dst.copy_from_slice(caller_pubkey.as_ref());
         initializer_pubkey_dst.copy_from_slice(initializer_pubkey.as_ref());
         receiver_pubkey_dst.copy_from_slice(receiver_pubkey.as_ref());
         temp_token_account_pubkey_dst.copy_from_slice(temp_token_account_pubkey.as_ref());

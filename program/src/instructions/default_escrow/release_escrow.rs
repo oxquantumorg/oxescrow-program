@@ -14,13 +14,15 @@ use spl_token::state::Account as TokenAccount;
 ///
 ///
 /// Accounts expected:
-/// 0. `[signer]` The account of the person taking the trade
+/// 0. `[]` The account of the person taking the trade
 /// 1. `[writable]` The taker's token account for the token they will receive should the trade go through
 /// 2. `[writable]` The PDA's temp token account to get tokens from and eventually close
 /// 3. `[writable]` The initializer's main account to send their rent fees to
 /// 4. `[writable]` The escrow account holding the escrow info
 /// 5. `[]` The token program
 /// 6. `[]` The PDA account
+/// 7. `[signer]` The caller / relayer
+ 
 pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     msg!("Release Escrow starting!");
@@ -31,6 +33,7 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
     let escrow_account = next_account_info(account_info_iter)?;
     let token_program = next_account_info(account_info_iter)?;
     let pda_account = next_account_info(account_info_iter)?;
+    let caller = next_account_info(account_info_iter)?;
 
     let (pda, bump_seed) = Pubkey::find_program_address(&[constants::ESCROW_SEED], program_id);
     msg!("Unpacking Escrow!");
@@ -59,6 +62,10 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
         return Err(ProgramError::InvalidAccountData);
     }
 
+    if escrow_info.caller_pubkey != *caller.key {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
     msg!("Transfer Tokens!");
     let amount = escrow_info.escrow_amount;
     let account_infos = &[
@@ -82,7 +89,7 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
     let close_pdas_temp_acc_ix = spl_token::instruction::close_account(
         token_program.key,
         pdas_temp_token_account.key,
-        initializers_main_account.key,
+        caller.key,
         &pda,
         &[&pda],
     )?;
@@ -91,7 +98,7 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
         &close_pdas_temp_acc_ix,
         &[
             pdas_temp_token_account.clone(),
-            initializers_main_account.clone(),
+            caller.clone(),
             pda_account.clone(),
             token_program.clone(),
         ],
@@ -99,7 +106,7 @@ pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
     )?;
 
     msg!("Closing the escrow account...");
-    **initializers_main_account.lamports.borrow_mut() = initializers_main_account
+    **caller.lamports.borrow_mut() = caller
         .lamports()
         .checked_add(escrow_account.lamports())
         .ok_or(EscrowError::AmountOverflow)?;

@@ -18,6 +18,7 @@ import {
 import { establishConnection } from "./network";
 
 const bob = async () => {
+  const callerAcc = getKeypair("id");
   const bobKeypair = getKeypair("bob");
   const bobUsdcTokenAccountPubkey = getPublicKey("bob_usdc");
   const escrowStateAccountPubkey = getPublicKey("escrow");
@@ -83,6 +84,7 @@ const bob = async () => {
       { pubkey: escrowStateAccountPubkey, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: PDA[0], isSigner: false, isWritable: false },
+      { pubkey: callerAcc.publicKey, isSigner: true, isWritable: false },
     ],
   });
 
@@ -108,7 +110,7 @@ const bob = async () => {
   console.log("Sending Bob's transaction...");
   await connection.sendTransaction(
     new Transaction().add(exchangeInstruction),
-    [bobKeypair],
+    [callerAcc],
     { skipPreflight: false, preflightCommitment: "confirmed" }
   );
 

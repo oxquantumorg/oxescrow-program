@@ -20,12 +20,13 @@ use crate::{
 ///
 /// Accounts expected:
 ///
-/// 0. `[signer]` The account of the person initializing the escrow
+/// 0. `[]` The account of the person initializing the escrow
 /// 1. `[]` The account of the receiver
-/// 2. `[writable]` Temporary token account that should be created prior to this instruction and owned by the initializer
+/// 2. `[writable]` Temporary token account that should be created prior to this instruction and owned by the caller
 /// 3. `[writable]` The escrow account, it will hold all necessary info about the trade.
 /// 4. `[]` The rent sysvar
 /// 5. `[]` The token program
+/// 6. `[signer]` The caller / relayer
 pub fn handler(accounts: &[AccountInfo], amount: u64, program_id: &Pubkey) -> ProgramResult {
     msg!("Escrow starting!");
     let account_info_iter = &mut accounts.iter();
@@ -35,8 +36,9 @@ pub fn handler(accounts: &[AccountInfo], amount: u64, program_id: &Pubkey) -> Pr
     let escrow_account = next_account_info(account_info_iter)?;
     let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
     let token_program = next_account_info(account_info_iter)?;
+    let caller = next_account_info(account_info_iter)?;
 
-    if !initializer.is_signer {
+    if !caller.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
@@ -51,6 +53,7 @@ pub fn handler(accounts: &[AccountInfo], amount: u64, program_id: &Pubkey) -> Pr
     }
 
     escrow_info.is_initialized = true;
+    escrow_info.caller_pubkey = *caller.key;
     escrow_info.initializer_pubkey = *initializer.key;
     escrow_info.receiver_pubkey = *receiver_account.key;
     escrow_info.temp_token_account_pubkey = *temp_token_account.key;
@@ -64,7 +67,7 @@ pub fn handler(accounts: &[AccountInfo], amount: u64, program_id: &Pubkey) -> Pr
     let authority_type = spl_token::instruction::AuthorityType::AccountOwner;
     let account_infos = &[
         temp_token_account.clone(),
-        initializer.clone(),
+        caller.clone(),
         token_program.clone(),
     ];
 
@@ -73,7 +76,7 @@ pub fn handler(accounts: &[AccountInfo], amount: u64, program_id: &Pubkey) -> Pr
         temp_token_account.clone(),
         pda,
         authority_type,
-        initializer.clone(),
+        caller.clone(),
         account_infos,
     );
 

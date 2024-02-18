@@ -35,8 +35,8 @@ const alice = async () => {
   const aliceUsdcTokenAccountPubkey = getPublicKey("alice_usdc");
   const usdcTokenMintPubkey = getPublicKey("mint_usdc");
   const bobKeypair = getKeypair("bob");
-  const aliceKeypair = getKeypair("alice");
-  const initializerAccount = aliceKeypair;
+  const initializerAccount = getKeypair("alice");
+  const callerAcc = getKeypair("id");
 
   const tempUsdcTokenAccountKeypair = new Account();
 
@@ -46,15 +46,15 @@ const alice = async () => {
     lamports: await connection.getMinimumBalanceForRentExemption(
       AccountLayout.span
     ),
-    fromPubkey: initializerAccount.publicKey,
+    fromPubkey: callerAcc.publicKey,
     newAccountPubkey: tempUsdcTokenAccountKeypair.publicKey,
   });
   const initTempAccountIX = createInitializeAccountInstruction(
     tempUsdcTokenAccountKeypair.publicKey,
     usdcTokenMintPubkey,
-    initializerAccount.publicKey
+    callerAcc.publicKey
   );
-  const transferUsdcTokensToTempAccIUsdc = createTransferInstruction(
+  const transferUsdcTokensToTempAccIX = createTransferInstruction(
     aliceUsdcTokenAccountPubkey,
     tempUsdcTokenAccountKeypair.publicKey,
     initializerAccount.publicKey,
@@ -62,12 +62,12 @@ const alice = async () => {
   );
 
   const escrowKeypair = new Account();
-  const createEscrowAccountIUsdc = SystemProgram.createAccount({
+  const createEscrowAccountIX = SystemProgram.createAccount({
     space: ESCROW_ACCOUNT_DATA_LAYOUT.span,
     lamports: await connection.getMinimumBalanceForRentExemption(
       ESCROW_ACCOUNT_DATA_LAYOUT.span
     ),
-    fromPubkey: initializerAccount.publicKey,
+    fromPubkey: callerAcc.publicKey,
     newAccountPubkey: escrowKeypair.publicKey,
     programId: escrowProgramId,
   });
@@ -77,7 +77,7 @@ const alice = async () => {
     keys: [
       {
         pubkey: initializerAccount.publicKey,
-        isSigner: true,
+        isSigner: false,
         isWritable: false,
       },
       {
@@ -93,6 +93,11 @@ const alice = async () => {
       { pubkey: escrowKeypair.publicKey, isSigner: false, isWritable: true },
       { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      {
+        pubkey: callerAcc.publicKey,
+        isSigner: true,
+        isWritable: false,
+      },
     ],
     data: Buffer.from(
       Uint8Array.of(0, ...new BN(terms.transferAmount).toArray("le", 1))
@@ -102,12 +107,13 @@ const alice = async () => {
   const tx = new Transaction().add(
     tempTokenAccountIX,
     initTempAccountIX,
-    transferUsdcTokensToTempAccIUsdc,
-    createEscrowAccountIUsdc,
+    transferUsdcTokensToTempAccIX,
+    createEscrowAccountIX,
     initEscrowIUsdc
   );
 
   const res = await sendAndConfirmTransaction(connection, tx, [
+    callerAcc,
     initializerAccount,
     tempUsdcTokenAccountKeypair,
     escrowKeypair,
