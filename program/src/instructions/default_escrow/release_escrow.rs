@@ -10,19 +10,20 @@ use crate::{
 };
 use spl_token::state::Account as TokenAccount;
 
-/// Release Escrow Funds
-///
-///
-/// Accounts expected:
-/// 0. `[]` The account of the person taking the trade
-/// 1. `[writable]` The taker's token account for the token they will receive should the trade go through
-/// 2. `[writable]` The PDA's temp token account to get tokens from and eventually close
-/// 3. `[writable]` The initializer's main account to send their rent fees to
-/// 4. `[writable]` The escrow account holding the escrow info
-/// 5. `[]` The token program
-/// 6. `[]` The PDA account
-/// 7. `[signer]` The caller / relayer
- 
+/** Release Escrow Funds
+
+    Accounts expected:
+
+    0. [] The account of the person taking the trade
+    1. [writable] The taker's token account for the token they will receive should the trade go through
+    2. [writable] The PDA's temp token account to get tokens from and eventually close
+    3. [writable] The initializer's main account to send their rent fees to
+    4. [writable] The escrow account holding the escrow info
+    5. [] The token program
+    6. [] The PDA account
+    7. [signer] The caller / relayer
+
+**/
 pub fn handler(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     msg!("Release Escrow starting!");
