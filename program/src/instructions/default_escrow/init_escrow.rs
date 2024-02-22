@@ -16,17 +16,18 @@ use crate::{
 };
 
 /** Initialize Escrow
+
+    Accounts expected:
+
+    0. [] The account of the person initializing the escrow
+    1. [] The account of the receiver
+    2. [writable] Temporary token account that should be created prior to this instruction and owned by the caller
+    3. [writable] The escrow account, it will hold all necessary info about the trade.
+    4. [] The rent sysvar
+    5. [] The token program
+    6. [signer] The caller / relayer
+
 **/
-///
-/// Accounts expected:
-///
-/// 0. `[]` The account of the person initializing the escrow
-/// 1. `[]` The account of the receiver
-/// 2. `[writable]` Temporary token account that should be created prior to this instruction and owned by the caller
-/// 3. `[writable]` The escrow account, it will hold all necessary info about the trade.
-/// 4. `[]` The rent sysvar
-/// 5. `[]` The token program
-/// 6. `[signer]` The caller / relayer
 pub fn handler(accounts: &[AccountInfo], amount: u64, program_id: &Pubkey) -> ProgramResult {
     msg!("Escrow starting!");
     let account_info_iter = &mut accounts.iter();
