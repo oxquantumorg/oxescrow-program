@@ -72,6 +72,7 @@ pub fn handler(accounts: &[AccountInfo], amount: u64, program_id: &Pubkey) -> Pr
         token_program.clone(),
     ];
 
+    // This line makes a call to transfer authority from the caller to this program's dervied address
     let _ = token_lib::change_account_authority(
         token_program.clone(),
         temp_token_account.clone(),
