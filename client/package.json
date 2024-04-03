@@ -11,6 +11,7 @@
     "deploy": "npm run compile && node ./build/deployer.js",
     "oracle": "npm run compile && node ./build/oracle.js",
     "setup": "npm run compile && node build/setup.js",
+    "airdrop": "npm run compile && node build/airdrop.js",
     "mint": "npm run compile && node build/mintUsdc.js",
     "alice": "npm run compile && node build/alice.js",
     "bob": "npm run compile && node build/bob.js",
